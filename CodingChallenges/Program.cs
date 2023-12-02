@@ -1,2 +1,10 @@
 ﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+using CodingChallenge.WCTool;
+
+void WCToolStart()
+{
+    while (true)
+    {
+        new CodingChallengeParser(Console.ReadLine()).Execute();
+    }
+}

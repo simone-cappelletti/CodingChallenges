@@ -100,7 +100,7 @@ namespace CodingChallenge.JSONParser
                 case JsonValueKind.Number:
 
                     // Int32 to simplify
-                    _sb.Append($"\"{rootElement.GetInt32()}\"");
+                    _sb.Append($"{rootElement.GetInt32()}");
 
                     break;
 

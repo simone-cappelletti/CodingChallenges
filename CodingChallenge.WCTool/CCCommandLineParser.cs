@@ -7,12 +7,12 @@ namespace CodingChallenge.WCTool
     /// <summary>
     /// Coding challenge command line parser
     /// </summary>
-    public class CodingChallengeParser
+    public class CCCommandLineParser
     {
         private readonly string _input;
         private string[] _args;
 
-        public CodingChallengeParser(string input)
+        public CCCommandLineParser(string input)
         {
             _input = input;
         }

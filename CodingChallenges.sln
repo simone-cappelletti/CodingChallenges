@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34322.80
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodingChallenges", "CodingChallenges\CodingChallenges.csproj", "{7E960CF6-589C-4CD8-A41E-49934D517799}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodingChallenges", "CodingChallenges\CodingChallenges.csproj", "{7E960CF6-589C-4CD8-A41E-49934D517799}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodingChallenge.WCTool", "CodingChallenge.WCTool\CodingChallenge.WCTool.csproj", "{54CD6841-E923-4D84-8EBD-6B4DA8902971}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodingChallenge.WCTool", "CodingChallenge.WCTool\CodingChallenge.WCTool.csproj", "{54CD6841-E923-4D84-8EBD-6B4DA8902971}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodingChallenge.JSONParser", "CodingChallenge.JSONParser\CodingChallenge.JSONParser.csproj", "{F3548AE1-988D-4B55-BF36-C336442531DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{54CD6841-E923-4D84-8EBD-6B4DA8902971}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54CD6841-E923-4D84-8EBD-6B4DA8902971}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54CD6841-E923-4D84-8EBD-6B4DA8902971}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3548AE1-988D-4B55-BF36-C336442531DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3548AE1-988D-4B55-BF36-C336442531DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3548AE1-988D-4B55-BF36-C336442531DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3548AE1-988D-4B55-BF36-C336442531DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

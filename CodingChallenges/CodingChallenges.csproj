@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CodingChallenge.JSONParser\CodingChallenge.JSONParser.csproj" />
     <ProjectReference Include="..\CodingChallenge.WCTool\CodingChallenge.WCTool.csproj" />
   </ItemGroup>
 

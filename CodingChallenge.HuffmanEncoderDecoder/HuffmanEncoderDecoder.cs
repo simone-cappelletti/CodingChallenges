@@ -1,4 +1,6 @@
-﻿namespace CodingChallenge.HuffmanEncoderDecoder
+﻿using System.Text;
+
+namespace CodingChallenge.HuffmanEncoderDecoder
 {
     public class HuffmanEncoderDecoder
     {
@@ -8,10 +10,13 @@
 
             try
             {
-                var charsFrequencies = ValidateInput(inputFile);
+                var charsFrequencies = ValidateInput(inputFile, out var text);
                 var huffmanRootNode = CreateHuffmanTree(charsFrequencies);
                 var prefixTable = CreatePrefixCodeTable(huffmanRootNode);
-                // STEP 4
+                WriteHeader(prefixTable, outputFile);
+                EncodeText(prefixTable, text, outputFile);
+
+                // STEP 6
             }
             catch (Exception ex)
             {
@@ -26,12 +31,12 @@
         /// </summary>
         /// <exception cref="FileNotFoundException"></exception>
         /// <returns>Chars frequencies</returns>
-        private CharFrequency[] ValidateInput(string path)
+        private CharFrequency[] ValidateInput(string path, out string text)
         {
             if (!File.Exists(path))
                 throw new FileNotFoundException();
 
-            var text = File.ReadAllText(path);
+            text = File.ReadAllText(path);
 
             return text
                 .GroupBy(x => x)
@@ -75,34 +80,83 @@
         /// </summary>
         /// <param name="root"></param>
         /// <returns>Prefix table</returns>
-        private Dictionary<char, string> CreatePrefixCodeTable(HuffmanNode root)
+        private Dictionary<char, int> CreatePrefixCodeTable(HuffmanNode root)
         {
-            var prefixTable = new Dictionary<char, string>();
+            var prefixTable = new Dictionary<char, int>();
 
             Dfs(root, null, prefixTable);
 
             return prefixTable;
 
-            void Dfs(HuffmanNode node, string? code, Dictionary<char, string> table)
+            void Dfs(HuffmanNode node, int? code, Dictionary<char, int> table)
             {
                 if (node.LeftChild is not null)
                 {
-                    var leftChildCode = code is null ? "1" : "1" + code;
+                    var leftChildCode = code ?? 1;
+
+                    if (code is not null)
+                    {
+                        leftChildCode <<= 1;
+                        leftChildCode |= 1;
+                    }
 
                     Dfs(node.LeftChild, leftChildCode, table);
                 }
 
                 if (node.RightChild is not null)
                 {
-                    var rightChildCode = code is null ? "0" : "0" + code;
+                    var rightChildCode = code ?? 0;
+
+                    if (code is not null)
+                    {
+                        rightChildCode <<= 1;
+                    }
 
                     Dfs(node.RightChild, rightChildCode, table);
                 }
 
                 if (node.LeftChild is null &&
                    node.RightChild is null)
-                    table.Add(node.Char!.Value, code!);
+                    table.Add(node.Char!.Value, code!.Value);
             }
+        }
+
+        /// <summary>
+        /// STEP 4: Write the header section to the output file
+        /// </summary>
+        /// <param name="prefixTable"></param>
+        /// <param name="outputFile"></param>
+        private void WriteHeader(Dictionary<char, int> prefixTable, string outputFile)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine("---BEGIN HEADER---");
+
+            foreach (var (key, value) in prefixTable)
+                sb.AppendLine($"{key} - {value}");
+
+            sb.AppendLine("---END HEADER---");
+
+            File.WriteAllText(outputFile, sb.ToString());
+        }
+
+        /// <summary>
+        /// STEP 5: Encoding the text in the output file
+        /// </summary>
+        /// <param name="prefixTable"></param>
+        /// <param name="text"></param>
+        /// <param name="outputFile"></param>
+        private void EncodeText(Dictionary<char, int> prefixTable, string text, string outputFile)
+        {
+            var bytes = new List<byte[]>();
+
+            foreach (var (key, value) in prefixTable)
+                bytes.Add(BitConverter.GetBytes(value));
+
+            var result = bytes.SelectMany(x => x).ToArray();
+
+            using var stream = new FileStream(outputFile, FileMode.Append, FileAccess.Write);
+            stream.Write(result, 0, result.Length);
         }
     }
 }

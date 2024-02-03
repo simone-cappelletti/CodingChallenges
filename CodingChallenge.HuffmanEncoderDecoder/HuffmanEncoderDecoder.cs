@@ -4,6 +4,9 @@ namespace CodingChallenge.HuffmanEncoderDecoder
 {
     public class HuffmanEncoderDecoder
     {
+        private const string HEADER_START = "--BEGIN HEADER---";
+        private const string HEADER_END = "---END HEADER---";
+
         public string Encode(string inputFile, string outputFile)
         {
             var result = string.Empty;
@@ -13,10 +16,11 @@ namespace CodingChallenge.HuffmanEncoderDecoder
                 var charsFrequencies = ValidateInput(inputFile, out var text);
                 var huffmanRootNode = CreateHuffmanTree(charsFrequencies);
                 var prefixTable = CreatePrefixCodeTable(huffmanRootNode);
+
                 WriteHeader(prefixTable, outputFile);
                 EncodeText(prefixTable, text, outputFile);
 
-                // STEP 6
+                var header = GetHeader(outputFile);
             }
             catch (Exception ex)
             {
@@ -130,12 +134,12 @@ namespace CodingChallenge.HuffmanEncoderDecoder
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine("---BEGIN HEADER---");
+            sb.AppendLine(HEADER_START);
 
             foreach (var (key, value) in prefixTable)
-                sb.AppendLine($"{key} - {value}");
+                sb.AppendLine($"{key}{value}");
 
-            sb.AppendLine("---END HEADER---");
+            sb.AppendLine(HEADER_END);
 
             File.WriteAllText(outputFile, sb.ToString());
         }
@@ -157,6 +161,51 @@ namespace CodingChallenge.HuffmanEncoderDecoder
 
             using var stream = new FileStream(outputFile, FileMode.Append, FileAccess.Write);
             stream.Write(result, 0, result.Length);
+        }
+
+        /// <summary>
+        /// STEP 6-7: Retrieve the header section from output file, build the prefix table and decode the file.
+        /// </summary>
+        /// <param name="outputFile"></param>
+        /// <returns>Prefix table</returns>
+        private Dictionary<char, int> GetHeader(string outputFile)
+        {
+            var prefixTable = new Dictionary<char, int>();
+            var textLines = File.ReadLines(outputFile);
+
+            var headerSection = false;
+
+            foreach (var textLine in textLines)
+            {
+                if (textLine.Equals(HEADER_START))
+                {
+                    headerSection = true;
+                    continue;
+                }
+                else if (textLine.Equals(HEADER_END))
+                {
+                    headerSection = false;
+                    continue;
+                }
+
+                if (headerSection)
+                {
+                    if (textLine.Length > 1)
+                    {
+                        var key = textLine[0];
+                        var value = int.Parse(textLine.Substring(1));
+
+                        if (!prefixTable.ContainsKey(key))
+                            prefixTable.Add(key, value);
+                    }
+                }
+                else
+                {
+
+                }
+            }
+
+            return prefixTable;
         }
     }
 }

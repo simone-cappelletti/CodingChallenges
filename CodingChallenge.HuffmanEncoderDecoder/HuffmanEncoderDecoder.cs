@@ -1,46 +1,77 @@
-﻿using System.Text;
+﻿using System.Collections;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace CodingChallenge.HuffmanEncoderDecoder
 {
     public class HuffmanEncoderDecoder
     {
-        private const string HEADER_START = "--BEGIN HEADER---";
-        private const string HEADER_END = "---END HEADER---";
+        private const int HF_LEFT_SIDE = 0;
+        private const int HF_RIGHT_SIDE = 1;
 
-        public string Encode(string inputFile, string outputFile)
+        private const char GS_CHAR = (char)29;
+
+        private const string HEADER_START = "::BEGIN HEADER::";
+        private const string HEADER_END = "::END HEADER::";
+        private const string HEADER_REGEX = @$"{HEADER_START}([\s\S]*?){HEADER_END}";
+
+        private string EncodedFile = string.Empty;
+        private string DecodedFile = string.Empty;
+
+        /// <summary>
+        /// Encoding the text
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="outputDirectory"></param>
+        public void Encode(string text, string outputDirectory)
         {
-            var result = string.Empty;
-
             try
             {
-                var charsFrequencies = ValidateInput(inputFile, out var text);
-                var huffmanRootNode = CreateHuffmanTree(charsFrequencies);
-                var prefixTable = CreatePrefixCodeTable(huffmanRootNode);
+                EncodedFile = Path.Combine(outputDirectory, "encodedText.txt");
+                DecodedFile = Path.Combine(outputDirectory, "decodedText.txt");
 
-                WriteHeader(prefixTable, outputFile);
-                EncodeText(prefixTable, text, outputFile);
+                var charsFrequencies = ValidateInput(text, outputDirectory);
+                var huffmanTree = CreateHuffmanTree(charsFrequencies);
+                var prefixTable = CreatePrefixTable(huffmanTree);
 
-                var header = GetHeader(outputFile);
+                WriteHeader(prefixTable);
+                EncodeText(prefixTable, text);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
+        }
 
-            return result;
+        /// <summary>
+        /// Decoding the text
+        /// </summary>
+        /// <returns></returns>
+        public void Decode()
+        {
+            try
+            {
+                var prefixTable = GetHeader();
+
+                Decode(prefixTable);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         /// <summary>
         /// STEP 1: Validate input and read text file
         /// </summary>
-        /// <exception cref="FileNotFoundException"></exception>
+        /// <param name="directory"></param>
+        /// <param name="text"></param>
         /// <returns>Chars frequencies</returns>
-        private CharFrequency[] ValidateInput(string path, out string text)
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        private CharFrequency[] ValidateInput(string text, string directory)
         {
-            if (!File.Exists(path))
-                throw new FileNotFoundException();
-
-            text = File.ReadAllText(path);
+            if (!Directory.Exists(directory))
+                throw new DirectoryNotFoundException();
 
             return text
                 .GroupBy(x => x)
@@ -58,7 +89,7 @@ namespace CodingChallenge.HuffmanEncoderDecoder
         {
             var queue = new PriorityQueue<HuffmanNode, int>();
 
-            foreach (CharFrequency charFrequency in charsFrequencies)
+            foreach (var charFrequency in charsFrequencies)
                 queue.Enqueue(
                     new HuffmanNode(charFrequency.Key, charFrequency.Count),
                     charFrequency.Count);
@@ -84,7 +115,7 @@ namespace CodingChallenge.HuffmanEncoderDecoder
         /// </summary>
         /// <param name="root"></param>
         /// <returns>Prefix table</returns>
-        private Dictionary<char, int> CreatePrefixCodeTable(HuffmanNode root)
+        private Dictionary<char, int> CreatePrefixTable(HuffmanNode root)
         {
             var prefixTable = new Dictionary<char, int>();
 
@@ -96,12 +127,11 @@ namespace CodingChallenge.HuffmanEncoderDecoder
             {
                 if (node.LeftChild is not null)
                 {
-                    var leftChildCode = code ?? 1;
+                    var leftChildCode = code ?? HF_LEFT_SIDE;
 
                     if (code is not null)
                     {
                         leftChildCode <<= 1;
-                        leftChildCode |= 1;
                     }
 
                     Dfs(node.LeftChild, leftChildCode, table);
@@ -109,11 +139,12 @@ namespace CodingChallenge.HuffmanEncoderDecoder
 
                 if (node.RightChild is not null)
                 {
-                    var rightChildCode = code ?? 0;
+                    var rightChildCode = code ?? HF_RIGHT_SIDE;
 
                     if (code is not null)
                     {
                         rightChildCode <<= 1;
+                        rightChildCode |= HF_RIGHT_SIDE;
                     }
 
                     Dfs(node.RightChild, rightChildCode, table);
@@ -129,19 +160,18 @@ namespace CodingChallenge.HuffmanEncoderDecoder
         /// STEP 4: Write the header section to the output file
         /// </summary>
         /// <param name="prefixTable"></param>
-        /// <param name="outputFile"></param>
-        private void WriteHeader(Dictionary<char, int> prefixTable, string outputFile)
+        private void WriteHeader(Dictionary<char, int> prefixTable)
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine(HEADER_START);
+            sb.Append(HEADER_START);
 
             foreach (var (key, value) in prefixTable)
-                sb.AppendLine($"{key}{value}");
+                sb.Append($"{key}{value}{GS_CHAR}");
 
-            sb.AppendLine(HEADER_END);
+            sb.Append(HEADER_END);
 
-            File.WriteAllText(outputFile, sb.ToString());
+            File.WriteAllText(EncodedFile, sb.ToString());
         }
 
         /// <summary>
@@ -149,63 +179,81 @@ namespace CodingChallenge.HuffmanEncoderDecoder
         /// </summary>
         /// <param name="prefixTable"></param>
         /// <param name="text"></param>
-        /// <param name="outputFile"></param>
-        private void EncodeText(Dictionary<char, int> prefixTable, string text, string outputFile)
+        private void EncodeText(Dictionary<char, int> prefixTable, string text)
         {
-            var bytes = new List<byte[]>();
+            // TO DO: In order to save space I need to use all the 32 bit instead of creating every time a new array for each char
 
-            foreach (var (key, value) in prefixTable)
-                bytes.Add(BitConverter.GetBytes(value));
+            const int BIT_ARRAY_SIZE = 32;
 
-            var result = bytes.SelectMany(x => x).ToArray();
-
-            using var stream = new FileStream(outputFile, FileMode.Append, FileAccess.Write);
-            stream.Write(result, 0, result.Length);
-        }
-
-        /// <summary>
-        /// STEP 6-7: Retrieve the header section from output file, build the prefix table and decode the file.
-        /// </summary>
-        /// <param name="outputFile"></param>
-        /// <returns>Prefix table</returns>
-        private Dictionary<char, int> GetHeader(string outputFile)
-        {
-            var prefixTable = new Dictionary<char, int>();
-            var textLines = File.ReadLines(outputFile);
-
-            var headerSection = false;
-
-            foreach (var textLine in textLines)
+            using (var binaryWriter = new BinaryWriter(File.Open(EncodedFile, FileMode.Append, FileAccess.Write)))
             {
-                if (textLine.Equals(HEADER_START))
+                var totalBitArray = new BitArray(BIT_ARRAY_SIZE);
+                foreach (var @char in text)
                 {
-                    headerSection = true;
-                    continue;
-                }
-                else if (textLine.Equals(HEADER_END))
-                {
-                    headerSection = false;
-                    continue;
-                }
+                    var currentBitArray = new BitArray(new int[] { prefixTable[@char] });
 
-                if (headerSection)
-                {
-                    if (textLine.Length > 1)
-                    {
-                        var key = textLine[0];
-                        var value = int.Parse(textLine.Substring(1));
-
-                        if (!prefixTable.ContainsKey(key))
-                            prefixTable.Add(key, value);
-                    }
-                }
-                else
-                {
-
+                    Write(currentBitArray, binaryWriter);
                 }
             }
 
+            void Write(BitArray bitArray, BinaryWriter binaryWriter)
+            {
+                var bytes = new byte[BIT_ARRAY_SIZE / 8];
+                bitArray.CopyTo(bytes, 0);
+                binaryWriter.Write(bytes);
+            }
+        }
+
+        /// <summary>
+        /// STEP 6: Retrieve the header section from input file and build the prefix table.
+        /// </summary>
+        /// <returns>Prefix table</returns>
+        private Dictionary<char, int> GetHeader()
+        {
+            var prefixTable = new Dictionary<char, int>();
+            var text = File.ReadAllText(EncodedFile);
+            var headerRegex = Regex.Matches(text, HEADER_REGEX);
+
+            if (headerRegex.Count == 0)
+                throw new Exception("No header found");
+
+            var headerText = headerRegex[0].Groups[1].Value;
+            var headerElements = headerText.Split(GS_CHAR, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var headerElement in headerElements)
+            {
+                var key = headerElement[0];
+                var value = int.Parse(headerElement.Substring(1));
+
+                prefixTable.Add(key, value);
+            }
+
+            File.WriteAllText(EncodedFile, text.Replace(headerRegex[0].Groups[0].Value, string.Empty));
+
             return prefixTable;
+        }
+
+        /// <summary>
+        /// STEP 7: Decode the text with the prefix table
+        /// </summary>
+        /// <param name="prefixTable"></param>
+        private void Decode(Dictionary<char, int> prefixTable)
+        {
+            var sb = new StringBuilder();
+            var text = File.OpenRead(EncodedFile);
+
+            using (var reader = new BinaryReader(text))
+            {
+                while (reader.BaseStream.Position < reader.BaseStream.Length)
+                {
+                    var value = reader.ReadInt32();
+                    var key = prefixTable.Single(x => x.Value == value).Key;
+
+                    sb.Append(key);
+                }
+            }
+
+            File.WriteAllText(DecodedFile, sb.ToString());
         }
     }
 }

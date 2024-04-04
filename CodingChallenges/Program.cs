@@ -3,19 +3,36 @@ using CodingChallenge.HuffmanEncoderDecoder;
 using CodingChallenge.JSONParser;
 using CodingChallenge.WCTool;
 
-HuffmanEncoderDecoder();
-
 void HuffmanEncoderDecoder()
 {
-    //Console.WriteLine("Insert input file path...");
-    //var inputFile = Console.ReadLine();
-    //Console.WriteLine("Insert output file path...");
-    //var outputFile = Console.ReadLine();
+    // This is the sample text provided from the coding challenge I used to validate the algorithm.
+    // It contains:
+    //      32 -> 'c'
+    //      42 -> 'd'
+    //      120 -> 'e'
+    //      7 -> 'k'
+    //      42 -> 'l'
+    //      24 -> 'm'
+    //      37 -> 'u'
+    //      2 -> 'z'
 
-    var inputFile = "C:\\Users\\scappelletti\\Desktop\\LesMiserables.txt";
-    var outputFile = "C:\\Users\\scappelletti\\Desktop\\CCEncoderDecoder.txt";
+    var sampleText = "cccccccccccccccccccccccccccccccc" +
+        "dddddddddddddddddddddddddddddddddddddddddd" +
+        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" +
+        "kkkkkkk" +
+        "llllllllllllllllllllllllllllllllllllllllll" +
+        "mmmmmmmmmmmmmmmmmmmmmmmmuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu" +
+        "zz";
 
-    new HuffmanEncoderDecoder().Encode(inputFile, outputFile);
+    Console.WriteLine("I'm going to encode the following sample text provided from the coding challenge:");
+    Console.WriteLine(sampleText);
+    Console.WriteLine("Choose an output directory...");
+    var outputDirectory = Console.ReadLine();
+
+    var hed = new HuffmanEncoderDecoder();
+
+    hed.Encode(sampleText, outputDirectory);
+    hed.Decode();
 }
 
 void WCToolStart()
